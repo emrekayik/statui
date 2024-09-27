@@ -1,77 +1,38 @@
-name: Release
+name: release
 
 on:
-  push:
-    tags:
-      - "[0-9]+.[0-9]+.[0-9]+"
-
-permissions:
-  contents: write
+  release:
+    types: [created]
 
 jobs:
-  build-and-upload:
-    name: Build and upload
-    runs-on: ${{ matrix.os }}
-
+  release:
+    name: publish ${{ matrix.name }}
     strategy:
+      fail-fast: true
       matrix:
-        # You can add more, for any target you'd like!
         include:
-          - build: linux
-            os: ubuntu-latest
-            target: x86_64-unknown-linux-musl
-
-          - build: macos
-            os: macos-latest
-            target: x86_64-apple-darwin
-
+          - target: x86_64-pc-windows-gnu
+            suffix: windows-x86_64
+            archive: zip
+            name: x86_64-pc-windows-gnu
+          - target: x86_64-unknown-linux-gnu
+            suffix: linux-x86_64
+            archive: tar.xz
+            name: x86_64-unknown-linux-gnu
+          - target: x86_64-apple-darwin
+            suffix: darwin-x86_64
+            archive: tar.gz
+            name: x86_64-apple-darwin
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Get the release version from the tag
-        shell: bash
-        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-
-      - name: Install Rust
-        # Or @nightly if you want
-        uses: dtolnay/rust-toolchain@stable
-        # Arguments to pass in
+      - name: Clone test repository
+        uses: actions/checkout@v2
+      - uses: xhaiker/rust-release.action@v1.0.0
+        name: build ${{ matrix.name }}
         with:
-          # Make Rust compile to our target (defined in the matrix)
-          targets: ${{ matrix.target }}
-
-      - name: Build
-        uses: actions-rs/cargo@v1
-        with:
-          use-cross: true
-          command: build
-          args: --verbose --release --target ${{ matrix.target }}
-
-      - name: Build archive
-        shell: bash
-        run: |
-          # Replace with the name of your binary
-          binary_name="<BINARY_NAME>"
-
-          dirname="$binary_name-${{ env.VERSION }}-${{ matrix.target }}"
-          mkdir "$dirname"
-          if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            mv "target/${{ matrix.target }}/release/$binary_name.exe" "$dirname"
-          else
-            mv "target/${{ matrix.target }}/release/$binary_name" "$dirname"
-          fi
-
-          if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            7z a "$dirname.zip" "$dirname"
-            echo "ASSET=$dirname.zip" >> $GITHUB_ENV
-          else
-            tar -czf "$dirname.tar.gz" "$dirname"
-            echo "ASSET=$dirname.tar.gz" >> $GITHUB_ENV
-          fi
-
-      - name: Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            ${{ env.ASSET }}
+          rust_target: ${{ matrix.target }}
+          archive_suffix: ${{ matrix.suffix }}
+          archive_types: ${{ matrix.archive }}
+          extra_files: "README.md README_zh.md LICENSE"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
