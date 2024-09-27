@@ -5,6 +5,10 @@ authors = ["emrekayik <emrekayik1905@gmail.com>"]
 license = "MIT"
 edition = "2021"
 
+[[bin]]
+name = "statui"
+path = "src/main.rs"
+
 [dependencies]
 crossterm = "0.28.1"
 ratatui = "0.28.1"
