@@ -32,9 +32,6 @@ jobs:
         run: cargo fmt -- --check
       - name: Cache Cargo dependencies
         uses: Swatinem/rust-cache@v2
-      - name: Rust Release binary
-        uses: rust-build/rust-build.action@v1.4.5
-            
   clippy:
     name: clippy
     runs-on: ubuntu-latest
@@ -88,27 +85,5 @@ jobs:
         run: cargo generate-lockfile
       - name: cargo test --locked
         run: cargo test --locked --all-features --all-targets
-      - name: Cache Cargo dependencies
-        uses: Swatinem/rust-cache@v2
-  build:
-    runs-on: ubuntu-latest
-    name: build
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install Rust stable
-        uses: dtolnay/rust-toolchain@stable
-      - name: Run cargo build
-        run: cargo build --all-features --all-targets
-      - name: Cache Cargo dependencies
-        uses: Swatinem/rust-cache@v2
-  release:
-    runs-on: ubuntu-latest
-    name: release
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install Rust stable
-        uses: dtolnay/rust-toolchain@stable
-      - name: Run cargo release
-        run: cargo release
       - name: Cache Cargo dependencies
         uses: Swatinem/rust-cache@v2
